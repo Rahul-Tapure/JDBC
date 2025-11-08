@@ -1,0 +1,233 @@
+//Student class is used to store data which is retrived from database or will be sended to database
+package com.model;
+import java.io.Serializable;
+
+public class Student implements Serializable {
+    private int id;
+    private String name;
+    private float marks;
+
+    public Student() {
+        // TODO Auto-generated constructor stub
+    }
+    public Student(int id, String name, float marks) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.marks = marks;
+    }
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public float getMarks() {
+        return marks;
+    }
+    public void setMarks(float marks) {
+        this.marks = marks;
+    }
+    @Override
+    public String toString() {
+        return "Student [id=" + id + ", name=" + name + ", marks=" + marks + "]";
+    }
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + Float.floatToIntBits(marks);
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Student other = (Student) obj;
+        if (id != other.id)
+            return false;
+        if (Float.floatToIntBits(marks) != Float.floatToIntBits(other.marks))
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
+    }
+}
+----------------------------------------------------------------------------------------------------------------------------------
+//dbUtility class for database connection object single-tone design offers only one object
+package com.util;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DBUtility {
+    private static DBUtility instance;
+    private static final String URL = "jdbc:mysql://localhost:3306/jpa8081";
+    private static final String USER = "root";
+    private static final String PASSWORD = "root";
+
+    private DBUtility() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            System.out.println(e);
+        }
+    }
+
+    public static DBUtility getInstance() {
+        if (instance == null)
+            instance = new DBUtility();
+        return instance;
+    }
+
+    public Connection getDBConnection() {
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch ( SQLException e) {
+            System.out.println("DBUtilty  " + e.getMessage());
+        }
+        return conn;
+    }
+}
+----------------------------------------------------------------------------------------------------------------------------------
+//StudentDAO has method for performing operation on database
+package com.dao;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import com.model.Student;
+import com.util.DBUtility;
+
+public class StudentDAO {
+
+    // add student
+    public int saveStudent(Student student) {
+        int noOfRows = 0;
+        String sql = "INSERT INTO STUDENT VALUES (?,?,?)";
+        try (Connection con = DBUtility.getDBConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, student.getId());
+            ps.setString(2, student.getName());
+            ps.setFloat(3, student.getMarks());
+            noOfRows = ps.executeUpdate();
+        } catch (Exception e) {
+            System.err.println("Add Student " + e.getMessage());
+        }
+        return noOfRows;
+    }
+  //adding student by direct field
+    public int saveStudent(int id, String name, float marks) {
+      String sql = "INSERT INTO STUDENT VALUES (id,name,marks)";
+        try (Connection con = DBUtility.getDBConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            noOfRows = ps.executeUpdate();
+        } catch (Exception e) {
+            System.err.println("Add Student " + e.getMessage());
+        }
+        return noOfRows;
+        return 0;
+    }
+    // delete student by id
+    public int deleteStudent(int id) {
+        int noOfRows = 0;
+        String sql = "DELETE FROM STUDENT WHERE id=?";
+        try (Connection con = DBUtility.getDBConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            noOfRows = ps.executeUpdate();
+        } catch (Exception e) {
+            System.err.println("DELEET Student " + e.getMessage());
+        }
+        return noOfRows;
+    }
+    // update student by id
+    public int updateStudent(Student student) {
+        int noOfRows = 0;
+        String sql = "UPADTE STUDENT SET name=? , marks=? WHERE id=?";
+        try (Connection con = DBUtility.getDBConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, student.getName());
+            ps.setFloat(2, student.getMarks());
+            ps.setInt(3, student.getId());
+            noOfRows = ps.executeUpdate();
+        } catch (Exception e) {
+            System.err.println("UPDATE Student " + e.getMessage());
+        }
+        return noOfRows;
+    }
+//show all student
+    public List<Student> getAllStudents() {
+        List<Student> studentsList = new ArrayList<Student>();
+        String sql = "SELECT * FROM STUDENT";
+        try (Connection con = DBUtility.getDBConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Student student = new Student(rs.getInt(1), rs.getString(2), rs.getFloat(3));
+                studentsList.add(student);
+            }
+        } catch (Exception e) {
+            System.err.println("READ ALL Student " + e.getMessage());
+        }
+        return studentsList;
+    }
+//show student by id
+    public Student findStudentById(int id) {
+        Student student = null;
+        String sql = "SELECT * FROM STUDENT WHERE id=?";
+
+        try (Connection con = DBUtility.getDBConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                student = new Student(rs.getInt(1), rs.getString(2), rs.getFloat(3));
+            }
+        } catch (Exception e) {
+            System.err.println("READ Student BY ID " + e.getMessage());
+        }
+        return student;
+    }
+}
+----------------------------------------------------------------------------------------------------------------------------------
+//app class is entry point of application
+package com.app;
+import com.model.Student;
+import com.dao.StudentDAO;
+public class App {
+	
+	public static void main(String[] args) {
+	
+    StudentDAO dao = new StudentDAO();
+    int rowEffected=0;
+
+//add student
+Student stud1 = new Student(11, "rahul", 90.0f);
+rowEffected = dao.saveStudent(stud1);
+rowEffected = dao.saveStudent("12, "rohit", 90.0f);
+
+//update student
+Student stud2 = new Student(12, "shubham", 90.0f);
+rowEffected = dao.updateStudent(stud2);
+
+//delete student 
+rowEffected = dao.deleteStudent(12);
+
+//show all student
+List<Student> = dao.getAllStudents();
+	}
+
+}
+
