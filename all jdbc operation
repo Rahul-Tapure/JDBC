@@ -1,0 +1,113 @@
+//inserting in database
+package insert;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class StudentData {
+	public static void main(String[] args) throws ClassNotFoundException, SQLException {
+		int id = 11;
+		String name = "Arjun";
+		float marks = 66.66f;
+		// insert MYSQL DATABASE jpa8081 TABLE student
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/jpa8081", "root", "root");
+		String sql = "insert into Student values (?,?,?)";
+		PreparedStatement ps = con.prepareStatement(sql);
+		ps.setInt(1, id);
+		ps.setString(2, name);
+		ps.setFloat(3, marks);
+		int rows = ps.executeUpdate();
+		if (rows > 0)
+			System.out.println("Record Insert SUCCESS");
+		else
+			System.out.println("Failed To ADD");
+		System.out.println("--------------");
+		con.close();
+		ps.close();
+	}
+}
+-------------------------------------------------------------------------------------------------------------------------------
+//deleting from database
+package delete;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class DeleteData {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
+        int id = 11;
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/jpa8081", "root", "root");
+        String sql = "DELETE FROM STUDENT WHERE id=?";
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ps.setInt(1, id);
+        int noOfRows = ps.executeUpdate();
+        if (noOfRows > 0)
+            System.out.println("SUCCESS");
+        else
+            System.out.println("FAILE TO DELETE");
+}
+}
+-------------------------------------------------------------------------------------------------------------------------------
+//updating in database
+package update;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class UpdateData {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
+        int id = 2;
+        String name = "Rahul";
+        float marks = 88.88f;
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/jpa8081", "root", "root");
+        String sql = "UPDATE STUDENT SET name=? , marks=? WHERE id=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, name);
+        ps.setFloat(2, marks);
+        ps.setInt(3, id);
+        int noOfRows = ps.executeUpdate();
+        if (noOfRows > 0)
+            System.out.println("UPADTE DATA");
+        else
+            System.out.println("FAILED  UPADTE DATA");
+        con.close();
+        ps.close();
+    }
+}
+-------------------------------------------------------------------------------------------------------------------------------
+//selecting from database
+package read;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class ReadData {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/jpa8081", "root", "root");
+        String sql = "SELECT * FROM STUDENT";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery();
+        System.out.println(" ID    NAME     MARKS");
+        System.out.println("================================");
+        while (rs.next()) {
+            System.out.print(rs.getInt(1) + "   ");
+            System.out.print(rs.getString(2) + "   ");
+            System.out.println(rs.getFloat(3) + "   ");
+        }
+        con.close();
+        ps.close();
+        rs.close();
+    }
+}
+
+-------------------------------------------------------------------------------------------------------------------------------
+
