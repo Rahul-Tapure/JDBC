@@ -1,0 +1,515 @@
+project/resources/ conatains properties of resourses like jdbc connection driver name, database url, password, username
+
+//db1.properties contains mysql info
+
+url=jdbc:mysql://localhost:3306/jpa8081
+driver=com.mysql.cj.jdbc.Driver
+username=root
+password=root
+
+//db2.properties contains postgresql info
+
+url=jdbc:postgresql://localhost:5432/jpa8081
+driver=org.postgresql.Driver
+username=postgres
+password=root
+
+-----------------------------------------------------------------------------------------------------------------------------
+//com.model.Student.java contains student data for inserting it to database retriving it from database
+
+package com.model;
+import java.io.Serializable;
+public class Student implements Serializable {
+    private int id;
+    private String name;
+    private float marks;
+    public Student() {
+        // TODO Auto-generated constructor stub
+    }
+    public Student(int id, String name, float marks) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.marks = marks;
+    }
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public float getMarks() {
+        return marks;
+    }
+    public void setMarks(float marks) {
+        this.marks = marks;
+    }
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + Float.floatToIntBits(marks);
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Student other = (Student) obj;
+        if (id != other.id)
+            return false;
+        if (Float.floatToIntBits(marks) != Float.floatToIntBits(other.marks))
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
+    }
+    @Override
+    public String toString() {
+        return "Student [id=" + id + ", name=" + name + ", marks=" + marks + "]";
+    }
+}
+-----------------------------------------------------------------------------------------------------------------------------
+//com.exception exception for invalid student vlaue
+//StudentException
+
+package com.exception;
+
+public class StudentException extends RuntimeException {
+    public StudentException(String message) {
+        super(message);
+    }
+    public StudentException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------
+//com.validation for valditing student data
+//StudentValidation
+
+package com.validation;
+import com.exception.StudentException;
+import com.model.Student;
+
+public class StudentValidation {
+    public static boolean validStudent(Student student){
+        if (student.getId() < 0)
+            throw new StudentException("Invalid Id " + student.getId());
+        else if (student.getName() == null || student.getName().trim().equals(""))
+            throw new StudentException("Name Not Null Or Empty " + student.getName());
+        else if (student.getMarks() < 0.0f && student.getMarks() >= 100.0)
+            throw new StudentException("Invalid Marks  " + student.getMarks());
+        return true;
+    }
+}
+-----------------------------------------------------------------------------------------------------------------------------
+//com.app.App.java is aapplication start point have option to choose betwwen two database mysql postgress
+
+package com.app;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Scanner;
+import com.model.Student;
+import com.service.StudentService;
+import com.service.StudentServiceImpl;
+import com.utility.DBUtility;
+
+public class App {
+	public static void main(String[] args) {
+		Scanner scanner=new Scanner(System.in);
+		System.out.println("Choose Database  SQL | POSTGRES");
+		int option;
+		System.out.println("Press 1 For MYSQL  Press 2 For POSGRE");
+		option=scanner.nextInt();
+		
+		String dbname=(option==1) ? "mysql" : "postgres";
+		DBUtility.getInstance().getDBConnection(dbname);
+
+		Student student = new Student(12, "Hank", 8.88f);
+		StudentService service = new StudentServiceImpl();
+
+		if (service.addStudent(student))
+			System.out.println("ADD");
+		else
+			System.out.println("FAIL TO ADD");
+
+		List<Student> list = service.retrieveAllStudents();
+		printAnother1StudentList(list);
+	}
+
+	public static void printStudentList(List<Student> list) {
+		Iterator<Student> itr = list.iterator();
+		System.out.println("ID    NAME    MARKS");
+		System.out.println("-----------------------------");
+		while (itr.hasNext()) {
+			Student student = itr.next();
+			System.out.print(student.getId());
+			System.out.print(student.getName());
+			System.out.println(student.getMarks());
+
+		}
+	}
+
+	public static void printAnotherStudentList(List<Student> list) {
+		Iterator<Student> itr = list.iterator();
+		System.out.println("ID          NAME     MARKS");
+		System.out.println("-----------------------------");
+		while (itr.hasNext()) {
+			Student student = itr.next();
+			System.out.printf("%4d | %10s | %.2f \n", student.getId(), student.getName(), student.getMarks());
+			System.out.println("___________________________");
+		}
+	}
+
+	public static void printAnother1StudentList(List<Student> list) {
+		System.out.println("+------+------------+--------+");
+		System.out.printf("| %-4s | %-10s | %-6s |\n", "ID", "NAME", "MARKS");
+		System.out.println("+------+------------+--------+");
+		for (Student student : list) {
+			System.out.printf("| %4d | %-10s | %6.2f |\n", student.getId(), student.getName(), student.getMarks());
+		}
+		System.out.println("+------+------------+--------+");
+	}
+}
+-----------------------------------------------------------------------------------------------------------------------------
+//com.utility.DBUtility.java create connection base on choice you enter in main for (mysql and postgress)
+package com.utility;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
+
+public class DBUtility {
+	private static DBUtility instance;
+	private String dbname;
+
+	private DBUtility() {
+	}
+
+	public static DBUtility getInstance() {
+		if (instance == null)
+			instance = new DBUtility();
+
+		return instance;
+	}
+
+	public Connection getDBConnection() {
+		String url = "";
+		String user = "";
+		String password = "";
+		Connection con = null;
+
+		if (this.dbname.equals("mysql")) {
+			try {
+				Properties properties = new Properties();
+				FileInputStream input = new FileInputStream("resources/db1.properties");
+				properties.load(input);
+				String driver = properties.getProperty("driver");
+
+				url = properties.getProperty("url");
+				user = properties.getProperty("username");
+				password = properties.getProperty("password");
+
+				con = DriverManager.getConnection(url, user, password);
+			} catch (SQLException | IOException e) {
+				System.out.println("DATABASE CONNECTION ISSUES  mysql 1");
+			}
+		} 
+
+else if (dbname.equals("postgres")) {
+			try {
+				Properties properties = new Properties();
+				FileInputStream input = new FileInputStream("resources/db2.properties");
+				properties.load(input);
+				String driver = properties.getProperty("driver");
+
+				url = properties.getProperty("url");
+				user = properties.getProperty("username");
+				password = properties.getProperty("password");
+
+				con = DriverManager.getConnection(url, user, password);
+			} catch (SQLException | IOException e) {
+				System.out.println("DATABASE CONNECTION ISSUES  postgres 1");
+			}
+		} 
+
+else {
+			throw new RuntimeException("Excption While Switch DB ");
+		}
+		return con;
+	}
+
+	public Connection getDBConnection(String dbname) {
+		String url = "";
+		String user = "";
+		String password = "";
+
+		Connection con = null;
+    this.dbname = dbname;
+
+		if (dbname.equals("mysql")) {
+			try {
+				Properties properties = new Properties();
+				FileInputStream input = new FileInputStream("resources/db1.properties");
+				properties.load(input);
+				String driver = properties.getProperty("driver");
+
+				url = properties.getProperty("url");
+				user = properties.getProperty("username");
+				password = properties.getProperty("password");
+
+				con = DriverManager.getConnection(url, user, password);
+			} catch (SQLException | IOException e) {
+				System.out.println("DATABASE CONNECTION ISSUES  mysql 2");
+			}
+		} 
+
+else if (dbname.equals("postgres")) {
+			try {
+				Properties properties = new Properties();
+				FileInputStream input = new FileInputStream("resources/db2.properties");
+				properties.load(input);
+				String driver = properties.getProperty("driver");
+
+				url = properties.getProperty("url");
+				user = properties.getProperty("username");
+				password = properties.getProperty("password");
+
+				con = DriverManager.getConnection(url, user, password);
+			} catch (SQLException | IOException e) {
+				System.out.println("DATABASE CONNECTION ISSUES  posgres 2");
+			}
+		}
+
+else {
+			throw new RuntimeException("Excption While Switch DB ");
+		}
+		return con;
+	}
+}
+-----------------------------------------------------------------------------------------------------------------------------
+//com.dao. conatains loagic of database operaion divided in different method
+
+//StudentDAO interface
+
+package com.dao;
+import java.util.List;
+import com.model.Student;
+public interface StudentDAO {
+    int saveStudent(Student student);
+    int deleteStudent(int id);
+    int updateStudent(Student student);
+    Student getStudentById(int id);
+    List<Student> getAllStudents();
+}
+
+//StudentDAOImpl class called by service classes to perform operation
+
+package com.dao;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import com.exception.DAOException;
+import com.model.Student;
+import com.utility.DBUtility;
+
+public class StudentDAOImpl implements StudentDAO {
+    @Override
+    public int saveStudent(Student student) {
+        String sql = "INSERT INTO student values(?,?,?)";
+        int noOfRows = 0;
+        try (Connection con = DBUtility.getInstance().getDBConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, student.getId());
+            ps.setString(2, student.getName());
+            ps.setFloat(3, student.getMarks());
+            noOfRows = ps.executeUpdate();
+        } catch (Exception e) {
+            //System.out.println("Failed To Add Student" + e);
+            throw new DAOException("Failed To Add Student",e);
+        }
+        return noOfRows;
+    }
+    @Override
+    public int deleteStudent(int id) {
+        String sql = "DELETE FROM student WHERE id=?";
+        int noOfRows = 0;
+        try (Connection con = DBUtility.getInstance().getDBConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            noOfRows = ps.executeUpdate();
+        } catch (Exception e) {
+            //System.out.println("Failed To Add Student" + e);
+            throw new DAOException("Failed To Delete Student",e);
+        }
+        return noOfRows;
+    }
+    @Override
+    public int updateStudent(Student student) {
+        String sql = "UPDATE STUDENT SET name=? , marks=? WHERE id=?";
+        int noOfRows = 0;
+        try (Connection con = DBUtility.getInstance().getDBConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, student.getName());
+            ps.setFloat(2, student.getMarks());
+            ps.setInt(3, student.getId());
+            noOfRows = ps.executeUpdate();
+        } catch (Exception e) {
+            //System.out.println("Failed To Add Student" + e);
+            throw new DAOException("Failed To Update Student",e);
+        }
+        return noOfRows;
+    }
+    @Override
+    public Student getStudentById(int id) {
+        String sql = "SELECT * FROM student WHERE id=?";
+        Student student = null;
+        try (Connection con = DBUtility.getInstance().getDBConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                student = new Student(rs.getInt(1), rs.getString(2), rs.getFloat(3));
+            }
+        } catch (Exception e) {
+            //System.out.println("Failed To Read Student" + e);
+            throw new DAOException("Failed To Read Student",e);
+        }
+        return student;
+    }
+    @Override
+    public List<Student> getAllStudents() {
+        String sql = "SELECT * FROM student";
+        List<Student> list = new ArrayList<Student>();
+        Student student = null;
+        try (Connection con = DBUtility.getInstance().getDBConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                student = new Student(rs.getInt(1), rs.getString(2), rs.getFloat(3));
+                list.add(student);
+            }
+        } catch (Exception e) {
+            //System.out.println("Failed To Add Student" + e);
+            throw new DAOException("Failed To Read Student",e);
+        }
+        return list;
+    }
+
+}
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+//com.exception is used to handle execption with proper message
+//DAOException
+
+package com.exception;
+
+public class DAOException extends RuntimeException {
+    public DAOException(String message) {
+        super(message);
+    }
+    public DAOException(String message, Throwable cause) {
+        super(message,cause);
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------
+//com.service. contains interface student and its implementaion which is used by main class as a service or funcationality
+//this classes provide well handle execuation of method which is present in studentDAOImp
+
+//StudentService interface
+
+package com.service;
+import java.util.List;
+import com.model.Student;
+
+public interface StudentService {
+    boolean addStudent(Student student);
+    boolean modifyStudent(Student student);
+    boolean removeStudent(int id);
+    Student findById(int id);
+    List<Student> retrieveAllStudents();
+}
+
+//StudentServiceImpl class used by main method 
+
+package com.service;
+import java.util.List;
+import com.dao.StudentDAO;
+import com.dao.StudentDAOImpl;
+import com.exception.ServiceException;
+import com.model.Student;
+import com.validation.StudentValidation;
+
+public class StudentServiceImpl implements StudentService {
+    StudentDAO dao = new StudentDAOImpl();
+    @Override
+    public boolean addStudent(Student student) {
+        boolean res = false;
+        StudentValidation.validStudent(student);
+        try {
+            res = dao.saveStudent(student) > 0;
+        } catch (Exception e) {
+            throw new ServiceException("Not Add record", e);
+        }
+        return res;
+    }
+    // Update Below API with StudentException
+    @Override
+    public boolean modifyStudent(Student student) {
+        return dao.updateStudent(student) > 0;
+    }
+    @Override
+    public boolean removeStudent(int id) {
+        return dao.deleteStudent(id) > 0;
+    }
+    @Override
+    public Student findById(int id) {
+        return dao.getStudentById(id);
+    }
+    @Override
+    public List<Student> retrieveAllStudents() {
+        return dao.getAllStudents();
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------
+//com.exception is used to handle execption with proper message
+//ServiceException
+
+package com.exception;
+
+public class ServiceException extends RuntimeException {
+    public ServiceException(String message) {
+        super(message);
+    }
+    public ServiceException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+-----------------------------------------------------------------------------------------------------------------------------
+
+
+
+
