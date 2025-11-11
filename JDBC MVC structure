@@ -150,23 +150,11 @@ public class App {
 			System.out.println("FAIL TO ADD");
 
 		List<Student> list = service.retrieveAllStudents();
-		printAnother1StudentList(list);
+		printStudentList(list);
 	}
+
 
 	public static void printStudentList(List<Student> list) {
-		Iterator<Student> itr = list.iterator();
-		System.out.println("ID    NAME    MARKS");
-		System.out.println("-----------------------------");
-		while (itr.hasNext()) {
-			Student student = itr.next();
-			System.out.print(student.getId());
-			System.out.print(student.getName());
-			System.out.println(student.getMarks());
-
-		}
-	}
-
-	public static void printAnotherStudentList(List<Student> list) {
 		Iterator<Student> itr = list.iterator();
 		System.out.println("ID          NAME     MARKS");
 		System.out.println("-----------------------------");
@@ -177,16 +165,7 @@ public class App {
 		}
 	}
 
-	public static void printAnother1StudentList(List<Student> list) {
-		System.out.println("+------+------------+--------+");
-		System.out.printf("| %-4s | %-10s | %-6s |\n", "ID", "NAME", "MARKS");
-		System.out.println("+------+------------+--------+");
-		for (Student student : list) {
-			System.out.printf("| %4d | %-10s | %6.2f |\n", student.getId(), student.getName(), student.getMarks());
-		}
-		System.out.println("+------+------------+--------+");
-	}
-}
+
 -----------------------------------------------------------------------------------------------------------------------------
 //com.utility.DBUtility.java create connection base on choice you enter in main for (mysql and postgress)
 package com.utility;
@@ -209,52 +188,6 @@ public class DBUtility {
 			instance = new DBUtility();
 
 		return instance;
-	}
-
-	public Connection getDBConnection() {
-		String url = "";
-		String user = "";
-		String password = "";
-		Connection con = null;
-
-		if (this.dbname.equals("mysql")) {
-			try {
-				Properties properties = new Properties();
-				FileInputStream input = new FileInputStream("resources/db1.properties");
-				properties.load(input);
-				String driver = properties.getProperty("driver");
-
-				url = properties.getProperty("url");
-				user = properties.getProperty("username");
-				password = properties.getProperty("password");
-
-				con = DriverManager.getConnection(url, user, password);
-			} catch (SQLException | IOException e) {
-				System.out.println("DATABASE CONNECTION ISSUES  mysql 1");
-			}
-		} 
-
-else if (dbname.equals("postgres")) {
-			try {
-				Properties properties = new Properties();
-				FileInputStream input = new FileInputStream("resources/db2.properties");
-				properties.load(input);
-				String driver = properties.getProperty("driver");
-
-				url = properties.getProperty("url");
-				user = properties.getProperty("username");
-				password = properties.getProperty("password");
-
-				con = DriverManager.getConnection(url, user, password);
-			} catch (SQLException | IOException e) {
-				System.out.println("DATABASE CONNECTION ISSUES  postgres 1");
-			}
-		} 
-
-else {
-			throw new RuntimeException("Excption While Switch DB ");
-		}
-		return con;
 	}
 
 	public Connection getDBConnection(String dbname) {
@@ -467,7 +400,10 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public boolean addStudent(Student student) {
         boolean res = false;
+StudentServiceImpl()
+{
         StudentValidation.validStudent(student);
+}
         try {
             res = dao.saveStudent(student) > 0;
         } catch (Exception e) {
