@@ -397,14 +397,16 @@ import com.validation.StudentValidation;
 
 public class StudentServiceImpl implements StudentService {
     StudentDAO dao = new StudentDAOImpl();
-    @Override
-    public boolean addStudent(Student student) {
-        boolean res = false;
+
 StudentServiceImpl()
 {
         StudentValidation.validStudent(student);
 }
-        try {
+
+    @Override
+    public boolean addStudent(Student student) {
+        boolean res = false;
+
             res = dao.saveStudent(student) > 0;
         } catch (Exception e) {
             throw new ServiceException("Not Add record", e);
